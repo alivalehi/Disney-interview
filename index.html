@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File Upload & Question Tool</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&display=swap');
+
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background: linear-gradient(135deg, #74b9ff, #a29bfe);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .container {
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+            max-width: 400px;
+            width: 90%;
+            transition: transform 0.3s ease;
+        }
+        .container:hover {
+            transform: scale(1.05);
+        }
+        .container h2 {
+            margin-bottom: 25px;
+            font-size: 22px;
+            text-align: center;
+            color: #333333;
+            font-weight: 600;
+        }
+        .container label {
+            display: block;
+            margin: 15px 0;
+            padding: 12px;
+            background-color: #00cec9;
+            color: #ffffff;
+            text-align: center;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        .container label:hover {
+            background-color: #0984e3;
+        }
+        .container input[type="file"] {
+            display: none;
+        }
+        .container button {
+            width: 100%;
+            padding: 12px;
+            background-color: #6c5ce7;
+            color: #ffffff;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 15px;
+            font-weight: 600;
+            transition: background-color 0.3s ease;
+        }
+        .container button:hover {
+            background-color: #341f97;
+        }
+        .container textarea {
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #dfe6e9;
+            margin-top: 15px;
+            height: 100px;
+            resize: none;
+        }
+        .container textarea::placeholder {
+            color: #b2bec3;
+        }
+        .response {
+            margin-top: 20px;
+            background-color: #f1f2f6;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #dfe6e9;
+            font-size: 14px;
+            color: #2d3436;
+            max-height: 150px; /* Limit the maximum height */
+            overflow-y: auto; /* Add a scrollbar if content exceeds the max height */
+            word-wrap: break-word; /* Break long words */
+            white-space: pre-wrap; /* Preserve whitespace and wrap text */
+        }
+        div#uploadCard {
+    margin-bottom: 30px;
+}
+    </style>
+</head>
+<body>
+    <div class="container" id="uploadCard">
+        <h2>Upload File</h2>
+        <form id="uploadForm">
+            <label for="fileInput">Choose a file</label>
+            <input type="file" id="fileInput" name="file">
+            <button type="submit">Upload File</button>
+        </form>
+        <div class="response" id="uploadResponse"></div>
+    </div>
+    <div class="container" id="questionCard">
+        <h2>Ask a Question</h2>
+        <form id="questionForm">
+            <textarea id="questionInput" placeholder="Ask a question..."></textarea>
+            <button type="submit">Ask Question</button>
+        </form>
+        <div class="response" id="questionResponse"></div>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Upload Form
+            const uploadForm = document.getElementById('uploadForm');
+            const fileInput = document.getElementById('fileInput');
+            const uploadResponse = document.getElementById('uploadResponse');
+
+            uploadForm.addEventListener('submit', async (event) => {
+                event.preventDefault();
+                const file = fileInput.files[0];
+
+                if (!file) {
+                    alert('Please select a file!');
+                    return;
+                }
+
+                const formData = new FormData();
+                formData.append('file', file);
+
+                uploadResponse.textContent = 'Uploading...';
+
+                try {
+                    const response = await fetch('/upload', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+
+                    const result = await response.json();
+                    uploadResponse.innerHTML = `<pre>${JSON.stringify(result.message, null, 2)}</pre>`;
+                } catch (error) {
+                    uploadResponse.textContent = 'Error uploading the file.';
+                    console.error('Error:', error);
+                }
+            });
+
+            // Question Form
+            const questionForm = document.getElementById('questionForm');
+            const questionInput = document.getElementById('questionInput');
+            const questionResponse = document.getElementById('questionResponse');
+
+            questionForm.addEventListener('submit', async (event) => {
+                event.preventDefault();
+                const question = questionInput.value.trim();
+
+                if (!question) {
+                    alert('Please ask a question!');
+                    return;
+                }
+
+                questionResponse.textContent = 'Asking...';
+
+                try {
+                    const response = await fetch('/ask', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ question })
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+
+                    const result = await response.json();
+                    questionResponse.innerHTML = `<pre>${JSON.stringify(result.answer, null, 2)}</pre>`;
+                } catch (error) {
+                    questionResponse.textContent = 'Error asking the question.';
+                    console.error('Error:', error);
+                }
+            });
+        });
+    </script>
+</body>
+</html>
